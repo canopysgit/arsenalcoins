@@ -38,15 +38,86 @@ function preload() {
     faces.push(loadImage('onetails.jpg'));
 }
 function makePlaces() {
+    const spacing = 300;  // 基础间距改小
+    const closeSpacing = 250;  // 两个硬币时的间距
+    const radius = spacing * 0.8;  // 5个硬币的环绕半径也相应调小
+    
     for (let i = 0; i < 20; i++) {
         let row = [];
-        for (let j = 0; j < i + 1; j++) {
-            let x = map(j, 0, i, -i * 150, i * 150);
-            // 修改垂直位置计算逻辑，让单个硬币居中显示
-            let y = map(i, 0, 20, -height/4, height/4) + height/8;  // 向下偏移 height/8
-            row.push(createVector(x, y));
+        let numCoins = i + 1;
+        
+        if (numCoins === 7) {
+            // 中心一个，周围6个环绕
+            row.push(createVector(0, 0));  // 中心
+            // 从正上方开始，每60度放置一个硬币
+            for (let j = 0; j < 6; j++) {
+                let angle = -PI/2 + j * TWO_PI/6;  // 从正上方开始，每60度一个
+                let x = radius * cos(angle);
+                let y = radius * sin(angle);
+                row.push(createVector(x, y));
+            }
+        } else if (numCoins === 6) {
+            // 中心一个，周围5个环绕
+            row.push(createVector(0, 0));  // 中心
+            // 从正上方开始，每72度放置一个硬币
+            for (let j = 0; j < 5; j++) {
+                let angle = -PI/2 + j * TWO_PI/5;  // 从正上方开始，每72度一个
+                let x = radius * cos(angle);
+                let y = radius * sin(angle);
+                row.push(createVector(x, y));
+            }
+        } else if (numCoins === 5) {
+            // 花瓣形布局：中心一个，四周环绕
+            row.push(createVector(0, 0));  // 中心
+            for (let j = 0; j < 4; j++) {
+                let angle = j * PI/2;
+                let x = radius * cos(angle);
+                let y = radius * sin(angle);
+                row.push(createVector(x, y));
+            }
+        } else if (numCoins === 4) {
+            // 2x2 网格布局
+            row.push(createVector(-spacing/2, -spacing/2));  // 左上
+            row.push(createVector(spacing/2, -spacing/2));   // 右上
+            row.push(createVector(-spacing/2, spacing/2));   // 左下
+            row.push(createVector(spacing/2, spacing/2));    // 右下
+        } else if (numCoins === 2) {
+            // 两个硬币靠近一些
+            row.push(createVector(-closeSpacing/2, 0));
+            row.push(createVector(closeSpacing/2, 0));
+        } else {
+            // 其他数量保持一行
+            for (let j = 0; j < numCoins; j++) {
+                let x = map(j, 0, numCoins - 1, -spacing, spacing);
+                row.push(createVector(x, 0));
+            }
         }
         places.push(row);
+    }
+}
+
+function nextCoins() {
+    slider.value(coin);
+    coins = [];
+    clist = change(coin);
+    let totalCoins = 0;
+    
+    // 计算总硬币数
+    for (let c of clist) {
+        totalCoins += c[1];
+    }
+    
+    let coinIndex = 0;
+    // 确保硬币按照网格位置排列
+    for (let c of clist) {
+        for (let i = 0; i < c[1]; i++) {
+            if (coinIndex < places[totalCoins - 1].length) {
+                let pos = places[totalCoins - 1][coinIndex];
+                let tpos = createVector(pos.x, pos.y, 0);
+                coins.push(new Coin(c[0], tpos, coinIndex));
+                coinIndex++;
+            }
+        }
     }
 }
 // 恢复原来的 makeHTML 函数
